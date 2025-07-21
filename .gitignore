@@ -1,0 +1,22 @@
+# Entorno virtual
+env/
+ENV/
+.venv/
+venv/
+
+# Archivos temporales de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Configuraciones locales
+*.env
+.env
+
+# Archivos de base de datos SQLite
+*.sqlite3
+
+# Archivos de log
+*.log
+
+#
