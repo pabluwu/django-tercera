@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import os
+from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -41,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'bomberos',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -104,7 +107,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'tercera_api',
         'USER': 'root',
-        'PASSWORD': 'sup3rl1m',
+        'PASSWORD': '',
         'HOST': 'localhost',  # o la IP/host de tu servidor MySQL
         'PORT': '3306',
         'OPTIONS': {
@@ -154,3 +157,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+MEDIA_URL = '/documentos/'  # lo que usas en FileField
+MEDIA_ROOT = os.path.join(BASE_DIR, 'documentos')  # carpeta real
