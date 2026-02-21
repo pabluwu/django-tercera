@@ -58,16 +58,30 @@ MIDDLEWARE = [
 
 # --- BASE DE DATOS (EL CAMBIO CLAVE) ---
 if os.getenv('DATABASE_URL'):
-    # Si existe DATABASE_URL (en Render), la usamos
+    # 1. Obtenemos la configuración base de la URL
+    db_config = dj_database_url.config(
+        default=os.getenv('DATABASE_URL'),
+        conn_max_age=600,
+    )
+
+    # 2. Eliminamos cualquier llave que cause conflicto (como sslmode o ssl-mode)
+    # Esto limpia lo que dj-database-url intenta autocompletar
+    db_config.pop('sslmode', None)
+    db_config.pop('ssl-mode', None)
+
+    # 3. Configuramos el SSL como un diccionario, que es lo que mysqlclient espera
+    db_config['OPTIONS'] = {
+        'ssl': {
+            'ca': None,  # Usa los certificados raíz del sistema de Render
+        },
+        'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+    }
+
     DATABASES = {
-        'default': dj_database_url.config(
-            default=os.getenv('DATABASE_URL'),
-            conn_max_age=600,
-            ssl_require=True # Aiven requiere SSL
-        )
+        'default': db_config
     }
 else:
-    # Si no (en tu local), usamos tu MySQL de siempre
+    # Configuración para local (se mantiene igual)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
