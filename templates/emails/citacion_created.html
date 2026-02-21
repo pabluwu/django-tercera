@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nueva citación</title>
+  </head>
+  <body style="font-family: Arial, Helvetica, sans-serif; color: #1f2937; background: #ffffff;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 16px;">
+      <h2 style="margin: 0 0 12px 0;">Nueva citación creada</h2>
+      <p style="margin: 0 0 16px 0;">
+        Se ha registrado una nueva citación en la intranet.
+      </p>
+
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 6px 0; font-weight: bold;">Nombre</td>
+          <td style="padding: 6px 0;">{{ citacion.nombre }}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; font-weight: bold;">Descripción</td>
+          <td style="padding: 6px 0;">{{ citacion.descripcion|default:"-" }}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; font-weight: bold;">Fecha</td>
+          <td style="padding: 6px 0;">
+            {% if fecha %}{{ fecha|date:"d/m/Y H:i" }}{% else %}-{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; font-weight: bold;">Lugar</td>
+          <td style="padding: 6px 0;">{{ citacion.lugar }}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; font-weight: bold;">Tenida</td>
+          <td style="padding: 6px 0;">{{ citacion.tenida }}</td>
+        </tr>
+      </table>
+
+      <p style="margin: 20px 0 0 0;">
+        Ver detalle:
+        <a href="{{ citacion_url }}" style="color: #2563eb;">{{ citacion_url }}</a>
+      </p>
+    </div>
+  </body>
+</html>

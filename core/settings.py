@@ -13,10 +13,17 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 import os
-from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
+
+if load_dotenv:
+    load_dotenv(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
@@ -55,6 +62,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'core.middleware.ApiLogMiddleware',
 ]
 
 CORS_ALLOWED_ORIGINS = [
@@ -83,7 +91,7 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -107,7 +115,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'tercera_api',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': 'sup3rl1m',
         'HOST': 'localhost',  # o la IP/host de tu servidor MySQL
         'PORT': '3306',
         'OPTIONS': {
@@ -160,3 +168,30 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/documentos/'  # lo que usas en FileField
 MEDIA_ROOT = os.path.join(BASE_DIR, 'documentos')  # carpeta real
+
+# Email / SMTP (se leen de variables de entorno)
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.getenv('SMTP_HOST', '')
+EMAIL_PORT = int(os.getenv('SMTP_PORT', '465'))
+EMAIL_HOST_USER = os.getenv('SMTP_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('SMTP_PASS', '')
+
+# Compatibilidad con variables tipo SMTP_SECURE/SMTP_REQUIRE_TLS (Express style)
+smtp_secure = os.getenv('SMTP_SECURE', '').lower()  # "true" => SSL
+smtp_require_tls = os.getenv('SMTP_REQUIRE_TLS', '').lower()  # "true" => STARTTLS
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', str(smtp_secure == 'true')).lower() == 'true'
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', str(smtp_secure != 'true' and smtp_require_tls == 'true')).lower() == 'true'
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
+DEFAULT_FROM_EMAIL = os.getenv('SMTP_FROM', EMAIL_HOST_USER or 'no-reply@example.com')
+
+# URL base para el link de restablecimiento de contraseña (frontend)
+FRONTEND_RESET_URL = os.getenv('FRONTEND_RESET_URL', 'https://example.com/reset-password')
+
+# URL base del frontend para enlaces (citaciones, etc.)
+FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL', 'http://localhost:3000')
+
+# Notificaciones de citaciones
+# Modo: "list" (usa CITACION_EMAIL_RECIPIENTS) o "all_users" (todos los usuarios activos con email)
+CITACION_EMAIL_RECIPIENTS_MODE = os.getenv('CITACION_EMAIL_RECIPIENTS_MODE', 'list')
+# Lista separada por coma o punto y coma
+CITACION_EMAIL_RECIPIENTS = os.getenv('CITACION_EMAIL_RECIPIENTS', 'lopez.pablo2305@gmail.com')

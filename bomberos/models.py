@@ -2,13 +2,31 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
+from django.utils import timezone
 
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name='bombero', on_delete=models.CASCADE)
     rut = models.CharField(max_length=15)
+    nombres = models.CharField(max_length=150, blank=True)
+    apellido_paterno = models.CharField(max_length=150, blank=True)
+    apellido_materno = models.CharField(max_length=150, blank=True)
+    cia = models.CharField(max_length=50, blank=True)
+    registro = models.CharField(max_length=50, blank=True)
+    registro_cia = models.CharField(max_length=50, blank=True)
+    codigo_llamado = models.CharField(max_length=50, blank=True)
+    cargo = models.CharField(max_length=100, blank=True)
     fecha_ingreso = models.DateField(null = True)
     telefono = models.IntegerField(null = True)
+    sexo = models.CharField(max_length=30, blank=True)
+    nacionalidad = models.CharField(max_length=100, blank=True)
+    sangre_grupo = models.CharField(max_length=10, blank=True)
+    estado_civil = models.CharField(max_length=50, blank=True)
+    profesion = models.CharField(max_length=150, blank=True)
+    direccion_calle = models.CharField(max_length=255, blank=True)
+    direccion_numero = models.CharField(max_length=20, blank=True)
+    direccion_complemento = models.CharField(max_length=255, blank=True)
+    direccion_comuna = models.CharField(max_length=100, blank=True)
     contacto = models.IntegerField(null = True)
     imagen = models.ImageField(upload_to ='fotos_perfil/', default='fotos_perfil/user.jpg')
 
@@ -145,3 +163,25 @@ class ComprobanteTesorero(models.Model):
     meses_pagados = models.ManyToManyField(MesAnio)
     monto_total = models.PositiveIntegerField()
     metodo_pago = models.CharField(max_length=15, choices=[('efectivo', 'Efectivo'), ('transferencia', 'Transferencia')])
+
+
+class ApiLog(models.Model):
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    path = models.CharField(max_length=300)
+    method = models.CharField(max_length=10)
+    status_code = models.IntegerField()
+    ip = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=400, blank=True)
+    body = models.TextField(blank=True)
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['created_at'], name='apilog_created_at_idx'),
+            models.Index(fields=['path'], name='apilog_path_idx'),
+            models.Index(fields=['status_code'], name='apilog_status_code_idx'),
+        ]
+
+    def __str__(self):
+        user_label = self.user.username if self.user else "anon"
+        return f"[{self.method}] {self.path} ({self.status_code}) - {user_label}"

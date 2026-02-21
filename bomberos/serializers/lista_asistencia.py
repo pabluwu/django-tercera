@@ -33,13 +33,14 @@ class ListaAsistenciaCreateSerializer(serializers.Serializer):
 
     def to_representation(self, instance):
         tipo = instance.content_type.model
+        evento = getattr(instance, 'evento', None)
         evento_info = {}
         licencias = []
         total_licencias = 0
 
         # Citación
-        if tipo == 'citacion' and hasattr(instance.evento, 'licencia_set'):
-            citacion = instance.evento
+        if tipo == 'citacion' and evento is not None and hasattr(evento, 'licencia_set'):
+            citacion = evento
             evento_info = {
                 'id': citacion.id,
                 'nombre': citacion.nombre,
@@ -67,8 +68,8 @@ class ListaAsistenciaCreateSerializer(serializers.Serializer):
             ]
 
         # Emergencia
-        elif tipo == 'emergencia':
-            emergencia = instance.evento
+        elif tipo == 'emergencia' and evento is not None:
+            emergencia = evento
             evento_info = {
                 'id': emergencia.id,
                 'clave': emergencia.clave,
@@ -99,6 +100,5 @@ class ListaAsistenciaCreateSerializer(serializers.Serializer):
                 for a in instance.asistencias.all()
             ]
         }
-
 
 

@@ -1,8 +1,10 @@
 # serializers.py
 
+from collections import OrderedDict
 from rest_framework import serializers
 from datetime import date
 from ..models import ComprobanteTransferencia, ComprobanteTesorero, MesAnio
+from .user import UserSerializer
 
 class MesAnioSerializer(serializers.ModelSerializer):
     class Meta:
@@ -45,6 +47,52 @@ class ComprobanteTransferenciaSerializer(serializers.ModelSerializer):
         if not data.get('meses_pagados'):
             raise serializers.ValidationError({"meses_pagados": "Debes seleccionar al menos un mes."})
         return data
+    
+
+class CuotasAnualesSerializer(serializers.Serializer):
+    anio = serializers.IntegerField()
+    pagadas = serializers.IntegerField()
+    pendientes = serializers.IntegerField()
+
+    def to_representation(self, instance):
+        """
+        Ensure deterministic ordering of keys per item.
+        """
+        rep = super().to_representation(instance)
+        return OrderedDict([
+            ('anio', rep['anio']),
+            ('pagadas', rep['pagadas']),
+            ('pendientes', rep['pendientes']),
+        ])
+
+
+class BomberoCuotasSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    user = UserSerializer()
+    rut = serializers.CharField(allow_blank=True, allow_null=True)
+    fecha_ingreso = serializers.DateField(allow_null=True)
+    telefono = serializers.IntegerField(allow_null=True)
+    contacto = serializers.IntegerField(allow_null=True)
+    imagen = serializers.CharField(allow_blank=True, allow_null=True)
+    cuotas_por_anio = CuotasAnualesSerializer(many=True)
+    total_pagadas = serializers.IntegerField()
+    total_pendientes = serializers.IntegerField()
+    isMoroso = serializers.IntegerField()
+
+    class Meta:
+        fields = (
+            'id',
+            'user',
+            'rut',
+            'fecha_ingreso',
+            'telefono',
+            'contacto',
+            'imagen',
+            'cuotas_por_anio',
+            'total_pagadas',
+            'total_pendientes',
+            'isMoroso',
+        )
     
 class ComprobanteTesoreroSerializer(serializers.ModelSerializer):
     meses_pagados = serializers.PrimaryKeyRelatedField(queryset=MesAnio.objects.all(), many=True)

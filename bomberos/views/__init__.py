@@ -4,4 +4,15 @@ from .licencia import LicenciaViewSet
 from .emergencia import EmergenciaViewSet
 from .lista_asistencia import ListaAsistenciaViewSet
 from .archivo import ArchivoViewSet
-from .tesoreria import ComprobanteTesoreroViewSet, ComprobanteTransferenciaViewSet, MesAnioViewSet
+from .tesoreria import (
+    ComprobanteTesoreroViewSet,
+    ComprobanteTransferenciaViewSet,
+    MesAnioViewSet,
+    ResumenCuotasViewSet,
+)
+from .asistencia import (
+    AsistenciaResumenViewSet,
+    UsuarioAsistenciaResumenView,
+    AsistenciaAnualGlobalView,
+    AsistenciaEmergenciaResumenViewSet,
+)
