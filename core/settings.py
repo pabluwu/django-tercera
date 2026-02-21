@@ -56,6 +56,7 @@ MIDDLEWARE = [
 # 6. CORS y REST Framework (Tus valores originales)
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "https://react-tercera.vercel.app",
 ]
 
 REST_FRAMEWORK = {
