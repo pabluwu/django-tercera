@@ -10,13 +10,13 @@ class Command(BaseCommand):
         parser.add_argument(
             "--start-year",
             type=int,
-            default=2020,
+            default=2026,
             help="Año inicial (incluido). Por defecto 2020.",
         )
         parser.add_argument(
             "--end-year",
             type=int,
-            default=2030,
+            default=2027,
             help="Año final (incluido). Por defecto 2030.",
         )
 
