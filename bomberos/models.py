@@ -59,6 +59,7 @@ class Emergencia(models.Model):
     clave = models.CharField(max_length=100)
     fecha = models.DateTimeField()
     unidades = models.TextField()
+    is_declarado = models.BooleanField(default=False)
     autor = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -185,3 +186,127 @@ class ApiLog(models.Model):
     def __str__(self):
         user_label = self.user.username if self.user else "anon"
         return f"[{self.method}] {self.path} ({self.status_code}) - {user_label}"
+
+
+# ==================== INVENTARIO MODELS ====================
+
+class Sala(models.Model):
+    """Modelo para representar salas donde se almacenan activos fijos."""
+    nombre = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['nombre']
+        verbose_name = 'Sala'
+        verbose_name_plural = 'Salas'
+
+    def __str__(self):
+        return self.nombre
+
+    def delete(self, *args, **kwargs):
+        """Soft delete: cambia is_active a False en lugar de eliminar."""
+        self.is_active = False
+        self.save()
+
+
+class Item(models.Model):
+    """Modelo para representar items/activos fijos."""
+    nombre = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True)
+    cantidad = models.PositiveIntegerField(default=1)
+    ubicacion_especifica = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True)
+    sala = models.ForeignKey(
+        Sala,
+        on_delete=models.PROTECT,
+        related_name='items'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['nombre']
+        verbose_name = 'Item'
+        verbose_name_plural = 'Items'
+
+    def __str__(self):
+        return f"{self.nombre} ({self.cantidad}) - {self.sala.nombre}"
+
+    def delete(self, *args, **kwargs):
+        """Soft delete: cambia is_active a False en lugar de eliminar."""
+        self.is_active = False
+        self.save()
+
+
+class AccionLogChoices(models.TextChoices):
+    CREATE = 'CREATE', 'Creación'
+    UPDATE = 'UPDATE', 'Actualización'
+    DELETE = 'DELETE', 'Eliminación'
+    TRANSFER = 'TRANSFER', 'Transferencia'
+
+
+class LogInventario(models.Model):
+    """Modelo para registrar todas las acciones del inventario."""
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='logs_inventario'
+    )
+    accion = models.CharField(max_length=20, choices=AccionLogChoices.choices)
+    motivo = models.TextField()
+    fecha = models.DateTimeField(auto_now_add=True)
+    sala_afectada = models.ForeignKey(
+        Sala,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='logs'
+    )
+    item_afectado = models.ForeignKey(
+        Item,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='logs'
+    )
+
+    class Meta:
+        ordering = ['-fecha']
+        verbose_name = 'Log de Inventario'
+        verbose_name_plural = 'Logs de Inventario'
+
+    def __str__(self):
+        usuario_label = self.usuario.username if self.usuario else "Sistema"
+        return f"[{self.accion}] {usuario_label} - {self.fecha.strftime('%Y-%m-%d %H:%M')}"
+
+
+class TipoExcepcionChoices(models.TextChoices):
+    SUSPENDIDO = 'Suspendido', 'Suspendido'
+    LICENCIA_CORRIDA = 'Licencia Corrida', 'Licencia Corrida'
+    SEPARADO = 'Separado', 'Separado'
+    LICENCIA_EXTENDIDA = 'Licencia Extendida', 'Licencia Extendida'
+
+
+class ExcepcionAsistencia(models.Model):
+    """Modelo para establecer excepciones en el cálculo de asistencia."""
+    tipo_excepcion = models.CharField(max_length=50, choices=TipoExcepcionChoices.choices)
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    fecha_inicio = models.DateTimeField()
+    fecha_fin = models.DateTimeField()
+    motivo = models.TextField()
+    autor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='excepciones_asistencia')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-fecha_inicio']
+        verbose_name = 'Excepción de Asistencia'
+        verbose_name_plural = 'Excepciones de Asistencia'
+
+    def __str__(self):
+        return f"{self.tipo_excepcion} - {self.autor.username} ({self.fecha_inicio.strftime('%Y-%m-%d')} a {self.fecha_fin.strftime('%Y-%m-%d')})"

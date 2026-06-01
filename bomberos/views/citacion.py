@@ -41,14 +41,14 @@ class CitacionViewSet(viewsets.ModelViewSet):
 
     def _get_citacion_recipients(self):
         mode = getattr(settings, 'CITACION_EMAIL_RECIPIENTS_MODE', 'list').lower()
-        if mode == 'all_users':
-            User = get_user_model()
-            return list(
-                User.objects.filter(is_active=True)
-                .exclude(email__isnull=True)
-                .exclude(email__exact='')
-                .values_list('email', flat=True)
-            )
+        # if mode == 'all_users':
+        #     User = get_user_model()
+        #     return list(
+        #         User.objects.filter(is_active=True)
+        #         .exclude(email__isnull=True)
+        #         .exclude(email__exact='')
+        #         .values_list('email', flat=True)
+        #     )
 
         raw = getattr(settings, 'CITACION_EMAIL_RECIPIENTS', '')
         return [email.strip() for email in raw.replace(';', ',').split(',') if email.strip()]

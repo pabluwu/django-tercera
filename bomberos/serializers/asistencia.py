@@ -18,9 +18,18 @@ class LicenciaDetalleSerializer(UsuarioBasicoSerializer):
     fecha_licencia = serializers.DateTimeField()
 
 
+class ExcepcionDetalleSerializer(UsuarioBasicoSerializer):
+    tipo_excepcion = serializers.CharField()
+    motivo = serializers.CharField()
+    fecha_inicio = serializers.DateTimeField()
+    fecha_fin = serializers.DateTimeField()
+
+
 class TotalesSerializer(serializers.Serializer):
     asistentes = serializers.IntegerField()
     licencias = serializers.IntegerField()
+    suspendidos = serializers.IntegerField()
+    separados = serializers.IntegerField()
     inasistencias = serializers.IntegerField()
     registrados = serializers.IntegerField()
 
@@ -28,6 +37,8 @@ class TotalesSerializer(serializers.Serializer):
 class PorcentajesSerializer(serializers.Serializer):
     asistentes = serializers.FloatField()
     licencias = serializers.FloatField()
+    suspendidos = serializers.FloatField()
+    separados = serializers.FloatField()
     inasistencias = serializers.FloatField()
 
 
@@ -44,6 +55,8 @@ class AsistenciaResumenSerializer(serializers.Serializer):
     citacion = CitacionResumenSerializer()
     asistentes = AsistenciaDetalleSerializer(many=True)
     licencias = LicenciaDetalleSerializer(many=True)
+    suspendidos = ExcepcionDetalleSerializer(many=True)
+    separados = ExcepcionDetalleSerializer(many=True)
     inasistentes = UsuarioBasicoSerializer(many=True)
     totales = TotalesSerializer()
     porcentajes = PorcentajesSerializer()
@@ -57,11 +70,14 @@ class UsuarioResumenAnualSerializer(serializers.Serializer):
     total_listas = serializers.IntegerField()
     asistencias = serializers.IntegerField()
     licencias = serializers.IntegerField()
+    suspendidos = serializers.IntegerField()
+    separados = serializers.IntegerField()
     inasistencias = serializers.IntegerField()
 
 
 class AsistenciaAnualGlobalSerializer(serializers.Serializer):
-    anio = serializers.IntegerField()
+    fecha_inicio = serializers.CharField() # O DateField
+    fecha_fin = serializers.CharField()
     total_citaciones = serializers.IntegerField()
     total_emergencias = serializers.IntegerField()
     total_listas = serializers.IntegerField()
@@ -81,6 +97,8 @@ class EmergenciaResumenSerializer(serializers.Serializer):
 class AsistenciaEmergenciaResumenSerializer(serializers.Serializer):
     emergencia = EmergenciaResumenSerializer()
     asistentes = AsistenciaDetalleSerializer(many=True)
+    suspendidos = ExcepcionDetalleSerializer(many=True)
+    separados = ExcepcionDetalleSerializer(many=True)
     inasistentes = UsuarioBasicoSerializer(many=True)
     totales = TotalesSerializer()
     porcentajes = PorcentajesSerializer()

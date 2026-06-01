@@ -16,3 +16,9 @@ from .asistencia import (
     AsistenciaAnualGlobalView,
     AsistenciaEmergenciaResumenViewSet,
 )
+from .inventario import (
+    SalaViewSet,
+    ItemViewSet,
+    LogInventarioViewSet,
+)
+from .excepcion_asistencia import ExcepcionAsistenciaViewSet

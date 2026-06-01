@@ -17,6 +17,14 @@ from .views import (
     AsistenciaEmergenciaResumenViewSet,
 )
 
+from .views.inventario import (
+    SalaViewSet,
+    ItemViewSet,
+    LogInventarioViewSet,
+)
+
+from .views.excepcion_asistencia import ExcepcionAsistenciaViewSet
+
 router = DefaultRouter()
 router.register(r'perfiles', UserProfileViewSet)
 router.register(r'citaciones', CitacionViewSet)
@@ -32,6 +40,14 @@ router.register(r'asistencia/resumen', AsistenciaResumenViewSet, basename='asist
 router.register(r'asistencia/usuario', UsuarioAsistenciaResumenView, basename='asistencia-usuario-resumen')
 router.register(r'asistencia/anual', AsistenciaAnualGlobalView, basename='asistencia-anual-resumen')
 router.register(r'asistencia/emergencia', AsistenciaEmergenciaResumenViewSet, basename='asistencia-emergencia-resumen')
+
+# Inventory endpoints
+router.register(r'inventario/salas', SalaViewSet, basename='sala')
+router.register(r'inventario/items', ItemViewSet, basename='item')
+router.register(r'inventario/logs', LogInventarioViewSet, basename='log-inventario')
+
+# ExcepcionAsistencia endpoints
+router.register(r'excepciones-asistencia', ExcepcionAsistenciaViewSet, basename='excepcion-asistencia')
 
 urlpatterns = [
     path('', include(router.urls)),

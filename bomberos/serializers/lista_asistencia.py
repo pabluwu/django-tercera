@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
-from ..models import ListaAsistencia, Asistencia
+from django.db.models import Q
+from ..models import ListaAsistencia, Asistencia, ExcepcionAsistencia
 
 class ListaAsistenciaCreateSerializer(serializers.Serializer):
     content_type = serializers.CharField()
@@ -32,14 +33,16 @@ class ListaAsistenciaCreateSerializer(serializers.Serializer):
         return lista
 
     def to_representation(self, instance):
-        tipo = instance.content_type.model
+        tipo_lista = instance.content_type.model
         evento = getattr(instance, 'evento', None)
         evento_info = {}
         licencias = []
         total_licencias = 0
+        excepciones = []
+        total_excepciones = 0
 
         # Citación
-        if tipo == 'citacion' and evento is not None and hasattr(evento, 'licencia_set'):
+        if tipo_lista == 'citacion' and evento is not None and hasattr(evento, 'licencia_set'):
             citacion = evento
             evento_info = {
                 'id': citacion.id,
@@ -68,7 +71,7 @@ class ListaAsistenciaCreateSerializer(serializers.Serializer):
             ]
 
         # Emergencia
-        elif tipo == 'emergencia' and evento is not None:
+        elif tipo_lista == 'emergencia' and evento is not None:
             emergencia = evento
             evento_info = {
                 'id': emergencia.id,
@@ -82,13 +85,44 @@ class ListaAsistenciaCreateSerializer(serializers.Serializer):
                 }
             }
 
+        # Obtener bomberos con excepciones activas para la fecha del evento
+        if evento is not None and hasattr(evento, 'fecha'):
+            evento_fecha = evento.fecha
+            excepciones_queryset = ExcepcionAsistencia.objects.filter(
+                is_active=True,
+                fecha_inicio__lte=evento_fecha,
+                fecha_fin__gte=evento_fecha
+            ).select_related('usuario')
+            
+            total_excepciones = excepciones_queryset.count()
+            
+            # Agrupar excepciones por tipo
+            excepciones_por_tipo = {}
+            for exc in excepciones_queryset:
+                tipo = exc.tipo_excepcion
+                if tipo not in excepciones_por_tipo:
+                    excepciones_por_tipo[tipo] = []
+                excepciones_por_tipo[tipo].append({
+                    'bombero_id': exc.usuario.id,
+                    'email': exc.usuario.email,
+                    'first_name': exc.usuario.first_name,
+                    'last_name': exc.usuario.last_name,
+                    'fecha_inicio': exc.fecha_inicio,
+                    'fecha_fin': exc.fecha_fin,
+                    'motivo': exc.motivo,
+                })
+            
+            excepciones = excepciones_por_tipo
+
         return {
             'id': instance.id,
-            'tipo': tipo,
+            'tipo': tipo_lista,
             'evento': evento_info,  # ahora contiene los datos completos
             'fecha_creacion': instance.fecha_creacion,
             'total_licencias': total_licencias,
             'licencias': licencias,
+            'total_excepciones': total_excepciones,
+            'excepciones': excepciones,
             'asistencias': [
                 {
                     'bombero_id': a.bombero.id,
