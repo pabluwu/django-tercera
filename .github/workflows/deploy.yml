@@ -32,7 +32,7 @@ jobs:
             fi
             
             # Reconstruir y levantar los contenedores en segundo plano
-            docker-compose up -d --build --force-recreate
+            docker compose up -d --build --force-recreate
             
             # Limpieza preventiva de imágenes huérfanas
             docker image prune -f
