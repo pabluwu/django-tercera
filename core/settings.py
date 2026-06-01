@@ -59,6 +59,11 @@ CORS_ALLOWED_ORIGINS = [
     "https://stage.terceraquillota.cl",
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://test-api.terceraquillota.cl",  # Este es el que está fallando actualmente
+    "https://stage.terceraquillota.cl",     # Es buena práctica agregarlo también
+]
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
