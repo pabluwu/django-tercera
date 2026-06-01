@@ -1,6 +1,21 @@
 version: '3.8'
 
 services:
+  db:
+    image: mariadb:10.11
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      # Esto asegura que los datos no se borren si apagas el contenedor
+      - mariadb_data:/var/lib/mysql
+    ports:
+      # No exponemos el puerto al mundo, solo a la red interna de Docker
+      - "127.0.0.1:3306:3306"
+
   web:
     build: .
     command: >
@@ -8,13 +23,15 @@ services:
              python manage.py collectstatic --noinput &&
              gunicorn core.wsgi:application --bind 0.0.0.0:8000"
     volumes:
-      - static_volume:/app/static
-      - media_volume:/app/media
+      - ./static:/app/static
+      - ./media:/app/media
     ports:
-      - "127.0.0.1:8000:8000" # Solo accesible desde dentro del VPS (Nginx lo alcanzará aquí)
+      - "127.0.0.1:8000:8000"
+    # Asegura que Django no intente arrancar antes de que la BD esté lista
+    depends_on:
+      - db
     env_file:
       - .env
 
 volumes:
-  static_volume:
-  media_volume:
+  mariadb_data:
