@@ -57,6 +57,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "https://react-tercera.vercel.app",
+    "https://stage.terceraquillota.cl",
 ]
 
 REST_FRAMEWORK = {
