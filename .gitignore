@@ -3,7 +3,8 @@ env/
 ENV/
 .venv/
 venv/
-
+static/
+documentos/
 # Archivos temporales de Python
 __pycache__/
 *.py[cod]
