@@ -1,6 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from ..models import UserProfile, Citacion, Licencia
+from PIL import Image
+from io import BytesIO
+from django.core.files.base import ContentFile
+import os
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -79,6 +83,32 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
 
         for attr, value in user_data.items():
             setattr(instance.user, attr, value)
+
+        # Compresión de imagen si se está subiendo una nueva
+        imagen = validated_data.get('imagen')
+        if imagen and hasattr(imagen, 'file'):
+            try:
+                img = Image.open(imagen)
+                
+                # Convertir a RGB si es necesario (para evitar problemas con JPEG)
+                if img.mode in ("RGBA", "P"):
+                    img = img.convert("RGB")
+                
+                # Redimensionar si es muy grande (ej. max 1024px de ancho o alto)
+                max_size = (1024, 1024)
+                img.thumbnail(max_size, Image.Resampling.LANCZOS)
+                
+                # Guardar en un buffer
+                buffer = BytesIO()
+                img.save(buffer, format='JPEG', quality=70, optimize=True)
+                buffer.seek(0)
+                
+                # Crear un nuevo archivo de contenido para Django
+                filename = os.path.splitext(imagen.name)[0] + '.jpg'
+                validated_data['imagen'] = ContentFile(buffer.read(), name=filename)
+            except Exception as e:
+                # Si falla el procesamiento, dejamos la imagen original o manejamos el error
+                print(f"Error al comprimir la imagen: {e}")
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)

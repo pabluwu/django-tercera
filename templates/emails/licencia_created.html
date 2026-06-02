@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Licencia Registrada</title>
+  </head>
+  <body style="font-family: Arial, Helvetica, sans-serif; color: #1f2937; background: #ffffff;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px;">
+      <h2 style="margin: 0 0 12px 0; color: #dc2626;">Confirmación de Licencia</h2>
+      <p style="margin: 0 0 16px 0;">
+        Hola <strong>{{ user.first_name }} {{ user.last_name }}</strong>, se ha registrado correctamente tu licencia.
+      </p>
+
+      <h3 style="border-bottom: 1px solid #f3f4f6; padding-bottom: 4px; color: #374151;">Datos de la Licencia</h3>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+        <tr>
+          <td style="padding: 6px 0; font-weight: bold; width: 120px;">Motivo</td>
+          <td style="padding: 6px 0;">{{ licencia.motivo }}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; font-weight: bold;">Fecha Registro</td>
+          <td style="padding: 6px 0;">{{ licencia.fecha_licencia|date:"d/m/Y H:i" }}</td>
+        </tr>
+      </table>
+
+      <h3 style="border-bottom: 1px solid #f3f4f6; padding-bottom: 4px; color: #374151;">Detalle de la Citación</h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 6px 0; font-weight: bold; width: 120px;">Nombre</td>
+          <td style="padding: 6px 0;">{{ citacion.nombre }}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; font-weight: bold;">Fecha Citación</td>
+          <td style="padding: 6px 0;">{{ citacion.fecha|date:"d/m/Y H:i" }}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; font-weight: bold;">Lugar</td>
+          <td style="padding: 6px 0;">{{ citacion.lugar }}</td>
+        </tr>
+      </table>
+
+      <p style="margin: 24px 0 0 0; font-size: 14px; color: #6b7280; text-align: center;">
+        Este es un correo automático, por favor no respondas.
+      </p>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Nuevo Archivo Disponible</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; background-color: #f4f4f4; padding: 20px;">
+    <div style="max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
+        <h2 style="color: #d32f2f; border-bottom: 2px solid #d32f2f; padding-bottom: 10px;">Nuevo Archivo para Lectura</h2>
+        <p>Se ha subido un nuevo documento a la plataforma institucional que podría ser de tu interés:</p>
+        
+        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #d32f2f;">
+            <p style="margin: 5px 0;"><strong>Nombre:</strong> {{ archivo.nombre }}</p>
+            <p style="margin: 5px 0;"><strong>Tipo:</strong> {{ archivo.get_tipo_display }}</p>
+            {% if archivo.descripcion %}
+                <p style="margin: 5px 0;"><strong>Descripción:</strong> {{ archivo.descripcion }}</p>
+            {% endif %}
+            <p style="margin: 5px 0;"><strong>Subido por:</strong> {{ archivo.creado_por.first_name }} {{ archivo.creado_por.last_name }}</p>
+        </div>
+
+        <p>Puedes acceder a la sección de archivos para leerlo o descargarlo.</p>
+
+        <div style="text-align: center; margin-top: 25px;">
+            <a href="{{ archivos_url }}" style="background-color: #d32f2f; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Ver Archivos</a>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 12px; color: #777; text-align: center;">Este es un mensaje automático del Sistema de Gestión de Bomberos.</p>
+    </div>
+</body>
+</html>

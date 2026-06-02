@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Comprobante de Transferencia Subido</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; background-color: #f4f4f4; padding: 20px;">
+    <div style="max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
+        <h2 style="color: #d32f2f; border-bottom: 2px solid #d32f2f; padding-bottom: 10px;">Nuevo Comprobante de Transferencia</h2>
+        <p>Hola <strong>{{ user.first_name }} {{ user.last_name }}</strong>,</p>
+        <p>Se ha recibido correctamente tu comprobante de transferencia para los siguientes meses:</p>
+        <ul style="background: #f9f9f9; padding: 15px; border-radius: 5px; list-style: none;">
+            {% for mes in meses %}
+                <li><strong>• {{ mes.get_mes_display }} {{ mes.anio }}</strong></li>
+            {% endfor %}
+        </ul>
+        <p>Tu comprobante será revisado por el equipo de tesorería a la brevedad. Recibirás un correo de confirmación una vez sea procesado.</p>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 12px; color: #777; text-align: center;">Este es un mensaje automático del Sistema de Gestión de Bomberos.</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cuotas Registradas</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; background-color: #f4f4f4; padding: 20px;">
+    <div style="max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
+        <h2 style="color: #2e7d32; border-bottom: 2px solid #2e7d32; padding-bottom: 10px;">Registro de Cuotas</h2>
+        <p>Hola <strong>{{ user.first_name }} {{ user.last_name }}</strong>,</p>
+        <p>Se han registrado nuevas cuotas en tu historial de tesorería por parte del Tesorero de turno.</p>
+        <p><strong>Detalle del registro:</strong></p>
+        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
+            <p style="margin: 5px 0;"><strong>N° Comprobante:</strong> {{ comprobante.numero_comprobante }}</p>
+            <p style="margin: 5px 0;"><strong>Monto Total:</strong> ${{ comprobante.monto_total }}</p>
+            <p style="margin: 5px 0;"><strong>Método de Pago:</strong> {{ comprobante.metodo_pago|capfirst }}</p>
+        </div>
+        <p><strong>Meses cubiertos:</strong></p>
+        <ul style="background: #f9f9f9; padding: 15px; border-radius: 5px; list-style: none;">
+            {% for mes in meses %}
+                <li><strong>• {{ mes.get_mes_display }} {{ mes.anio }}</strong></li>
+            {% endfor %}
+        </ul>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 12px; color: #777; text-align: center;">Este es un mensaje automático del Sistema de Gestión de Bomberos.</p>
+    </div>
+</body>
+</html>

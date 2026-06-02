@@ -16,6 +16,11 @@ from ..serializers.tesoreria import (
     MesAnioSerializer,
     BomberoCuotasSerializer
 )
+from ..utils import (
+    send_comprobante_upload_notification,
+    send_comprobante_status_notification,
+    send_cuotas_registradas_notification
+)
 
 class ComprobanteTransferenciaViewSet(viewsets.ModelViewSet):
     queryset = ComprobanteTransferencia.objects.all()
@@ -24,8 +29,8 @@ class ComprobanteTransferenciaViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser] 
 
     def perform_create(self, serializer):
-        print(self.request.data)
-        serializer.save(bombero=self.request.user)
+        comprobante = serializer.save(bombero=self.request.user)
+        send_comprobante_upload_notification(comprobante)
     
     def create(self, request, *args, **kwargs):
         try:
@@ -67,6 +72,8 @@ class ComprobanteTransferenciaViewSet(viewsets.ModelViewSet):
         instance.fecha_revision = now()
         instance.save()
 
+        send_comprobante_status_notification(instance)
+
         return Response({"detail": "Comprobante aprobado y registrado correctamente"})
 
     @action(detail=True, methods=['patch'], permission_classes=[permissions.IsAuthenticated])
@@ -78,6 +85,9 @@ class ComprobanteTransferenciaViewSet(viewsets.ModelViewSet):
         instance.fecha_revision = now()
         instance.observacion = observacion
         instance.save()
+        
+        send_comprobante_status_notification(instance)
+        
         return Response({"detail": "Comprobante rechazado"})
 
 class ComprobanteTesoreroViewSet(viewsets.ModelViewSet):
@@ -86,7 +96,8 @@ class ComprobanteTesoreroViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, groups_required('Tesorero')]
     
     def perform_create(self, serializer):
-        serializer.save(tesorero=self.request.user) 
+        comprobante = serializer.save(tesorero=self.request.user) 
+        send_cuotas_registradas_notification(comprobante)
     
     def create(self, request, *args, **kwargs):
         try:

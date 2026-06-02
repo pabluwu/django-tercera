@@ -5,6 +5,7 @@ from rest_framework import viewsets, permissions
 from rest_framework.exceptions import ValidationError
 from bomberos.models import Licencia
 from ..serializers.licencia import LicenciaSerializer
+from ..utils import send_licencia_confirmation_email
 
 class LicenciaViewSet(viewsets.ModelViewSet):
     queryset = Licencia.objects.all()
@@ -25,7 +26,8 @@ class LicenciaViewSet(viewsets.ModelViewSet):
                     {"citacion": "No se puede crear la licencia si la citación es menor a 24 horas."}
                 )
 
-        serializer.save(autor=self.request.user)
+        licencia = serializer.save(autor=self.request.user)
+        send_licencia_confirmation_email(licencia)
 
     def get_queryset(self):
         queryset = super().get_queryset()

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultado Revisión de Comprobante</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; background-color: #f4f4f4; padding: 20px;">
+    <div style="max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
+        {% if aprobado %}
+            <h2 style="color: #2e7d32; border-bottom: 2px solid #2e7d32; padding-bottom: 10px;">Comprobante Aprobado</h2>
+            <p>Hola <strong>{{ user.first_name }} {{ user.last_name }}</strong>,</p>
+            <p>Nos complace informarte que tu comprobante de transferencia ha sido <strong>APROBADO</strong>.</p>
+            <p>Se han registrado tus cuotas correspondientes a:</p>
+        {% else %}
+            <h2 style="color: #d32f2f; border-bottom: 2px solid #d32f2f; padding-bottom: 10px;">Comprobante Rechazado</h2>
+            <p>Hola <strong>{{ user.first_name }} {{ user.last_name }}</strong>,</p>
+            <p>Lamentamos informarte que tu comprobante de transferencia ha sido <strong>RECHAZADO</strong>.</p>
+            {% if observacion %}
+                <div style="background: #fff3f3; border-left: 4px solid #d32f2f; padding: 15px; margin: 15px 0;">
+                    <strong>Motivo del rechazo:</strong><br>
+                    {{ observacion }}
+                </div>
+            {% endif %}
+            <p>Por favor, revisa la información y vuelve a subir el comprobante si es necesario.</p>
+        {% endif %}
+
+        <ul style="background: #f9f9f9; padding: 15px; border-radius: 5px; list-style: none;">
+            {% for mes in meses %}
+                <li><strong>• {{ mes.get_mes_display }} {{ mes.anio }}</strong></li>
+            {% endfor %}
+        </ul>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 12px; color: #777; text-align: center;">Este es un mensaje automático del Sistema de Gestión de Bomberos.</p>
+    </div>
+</body>
+</html>

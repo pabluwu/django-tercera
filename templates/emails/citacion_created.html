@@ -3,44 +3,66 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nueva citación</title>
+    <title>Nueva Citación Registrada</title>
   </head>
-  <body style="font-family: Arial, Helvetica, sans-serif; color: #1f2937; background: #ffffff;">
-    <div style="max-width: 600px; margin: 0 auto; padding: 16px;">
-      <h2 style="margin: 0 0 12px 0;">Nueva citación creada</h2>
-      <p style="margin: 0 0 16px 0;">
-        Se ha registrado una nueva citación en la intranet.
-      </p>
+  <body style="font-family: Arial, Helvetica, sans-serif; color: #1f2937; background: #f9fafb; padding: 20px;">
+    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+      
+      <!-- Header -->
+      <div style="background: #dc2626; padding: 24px; text-align: center;">
+        <h1 style="margin: 0; color: #ffffff; font-size: 20px; text-transform: uppercase; letter-spacing: 1px;">Nueva Citación</h1>
+      </div>
 
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td style="padding: 6px 0; font-weight: bold;">Nombre</td>
-          <td style="padding: 6px 0;">{{ citacion.nombre }}</td>
-        </tr>
-        <tr>
-          <td style="padding: 6px 0; font-weight: bold;">Descripción</td>
-          <td style="padding: 6px 0;">{{ citacion.descripcion|default:"-" }}</td>
-        </tr>
-        <tr>
-          <td style="padding: 6px 0; font-weight: bold;">Fecha</td>
-          <td style="padding: 6px 0;">
-            {% if fecha %}{{ fecha|date:"d/m/Y H:i" }}{% else %}-{% endif %}
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 6px 0; font-weight: bold;">Lugar</td>
-          <td style="padding: 6px 0;">{{ citacion.lugar }}</td>
-        </tr>
-        <tr>
-          <td style="padding: 6px 0; font-weight: bold;">Tenida</td>
-          <td style="padding: 6px 0;">{{ citacion.tenida }}</td>
-        </tr>
-      </table>
+      <!-- Content -->
+      <div style="padding: 32px;">
+        <h2 style="margin: 0 0 16px 0; color: #111827; font-size: 24px; font-weight: 800;">{{ citacion.nombre }}</h2>
+        
+        <p style="margin: 0 0 24px 0; color: #4b5563; line-height: 1.6;">
+          Se ha publicado una nueva citación oficial en la plataforma. Por favor, revisa los detalles a continuación:
+        </p>
 
-      <p style="margin: 20px 0 0 0;">
-        Ver detalle:
-        <a href="{{ citacion_url }}" style="color: #2563eb;">{{ citacion_url }}</a>
-      </p>
+        <!-- Details Box -->
+        <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #f1f5f9;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px 0; color: #64748b; font-size: 13px; font-weight: bold; text-transform: uppercase; width: 100px;">Fecha</td>
+              <td style="padding: 8px 0; color: #1e293b; font-weight: bold;">
+                {% if fecha %}{{ fecha|date:"d/m/Y H:i" }} hrs.{% else %}Por confirmar{% endif %}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #64748b; font-size: 13px; font-weight: bold; text-transform: uppercase;">Lugar</td>
+              <td style="padding: 8px 0; color: #1e293b;">{{ citacion.lugar }}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #64748b; font-size: 13px; font-weight: bold; text-transform: uppercase;">Tenida</td>
+              <td style="padding: 8px 0; color: #1e293b;">{{ citacion.tenida }}</td>
+            </tr>
+          </table>
+        </div>
+
+        {% if citacion.descripcion %}
+        <div style="margin-bottom: 24px;">
+          <h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 14px; text-transform: uppercase;">Descripción</h4>
+          <p style="margin: 0; color: #4b5563; font-size: 15px; line-height: 1.5; white-space: pre-line;">{{ citacion.descripcion }}</p>
+        </div>
+        {% endif %}
+
+        <!-- CTA -->
+        <div style="text-align: center; margin-top: 32px;">
+          <a href="{{ citacion_url }}" style="display: inline-block; background: #dc2626; color: #ffffff; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 16px;">
+            Ver en la Plataforma
+          </a>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="background: #f3f4f6; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+        <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+          Este es un aviso automático generado por el Sistema de Gestión de Bomberos.<br>
+          © 2026 Tercera Compañía.
+        </p>
+      </div>
     </div>
   </body>
 </html>
