@@ -30,12 +30,24 @@ class UserProfile(models.Model):
     contacto = models.IntegerField(null = True)
     imagen = models.ImageField(upload_to ='fotos_perfil/', default='fotos_perfil/user.jpg')
 
+RESPONSABLE_CHOICES = [
+    ('director', 'Director'),
+    ('capitan', 'Capitán'),
+    ('secretario', 'Secretario'),
+    ('tesorero', 'Tesorero'),
+    ('teniente_1', 'Teniente 1°'),
+    ('teniente_2', 'Teniente 2°'),
+    ('teniente_3', 'Teniente 3°'),
+    ('ayudante', 'Ayudante'),
+]
+
 class Citacion(models.Model):
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(max_length=300, null=True)
     fecha = models.DateTimeField(null=True)
     lugar = models.CharField(max_length=100)
     tenida = models.CharField(max_length=100)
+    responsable = models.CharField(max_length=50, choices=RESPONSABLE_CHOICES, null=True, blank=True)
     autor = models.ForeignKey(User, on_delete=models.CASCADE)
     
     def __str__(self):

@@ -33,6 +33,6 @@ jobs:
             
             # Reconstruir y levantar los contenedores en segundo plano
             docker compose up -d --build --force-recreate
-            
+            docker compose exec -T backend python manage.py migrate
             # Limpieza preventiva de imágenes huérfanas
             docker image prune -f

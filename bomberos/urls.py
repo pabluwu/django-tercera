@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import UserProfileViewSet, CitacionViewSet, LicenciaViewSet, ListaAsistenciaViewSet, EmergenciaViewSet, ArchivoViewSet
 from .views.user import me_view
 from .views.tipos_permitidos import TiposPermitidosView
+from .views.responsables import ResponsablesListView
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views.auth import RutTokenObtainPairView, PasswordResetRequestView, PasswordResetConfirmView
 
@@ -50,11 +51,12 @@ router.register(r'inventario/logs', LogInventarioViewSet, basename='log-inventar
 router.register(r'excepciones-asistencia', ExcepcionAsistenciaViewSet, basename='excepcion-asistencia')
 
 urlpatterns = [
+    path('citaciones/responsables/', ResponsablesListView.as_view(), name='responsables_list'),
     path('', include(router.urls)),
-    path('token/', RutTokenObtainPairView.as_view(), name='token_obtain_pair'),  # login por RUT
+    path('token/', RutTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),  # renovar
     path('password-reset/request/', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('password-reset/confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('me/', me_view, name='me'),
-    path('archivo/tipos-permitidos/', TiposPermitidosView.as_view(), name='tipos_permitidos'), 
+    path('archivo/tipos-permitidos/', TiposPermitidosView.as_view(), name='tipos_permitidos'),
 ]

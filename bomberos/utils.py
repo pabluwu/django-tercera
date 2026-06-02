@@ -103,13 +103,14 @@ def build_citacion_ics(citacion):
 
 def send_citacion_notification_email(citacion):
     """
-    Envía una notificación de nueva citación a los destinatarios configurados.
+    Envía una notificación de nueva citación a todos los usuarios activos que tengan email.
     """
-    recipients_raw = getattr(settings, 'CITACION_EMAIL_RECIPIENTS', '')
-    recipients = [email.strip() for email in recipients_raw.replace(';', ',').split(',') if email.strip()]
+    User = get_user_model()
+    # Obtener todos los correos de usuarios activos que tengan email
+    recipients = list(User.objects.filter(is_active=True).exclude(email__isnull=True).exclude(email='').values_list('email', flat=True))
     
     if not recipients:
-        logger.warning("No hay destinatarios configurados para notificación de citaciones.")
+        logger.warning("No hay usuarios activos con email para notificación de citaciones.")
         return False
 
     base_url = getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000').rstrip('/')
