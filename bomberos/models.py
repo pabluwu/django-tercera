@@ -3,10 +3,57 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.utils import timezone
+import uuid
+
+
+
+class Tenant(models.Model):
+    nombre = models.CharField(max_length=100)
+    subdominio = models.CharField(max_length=50, unique=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = 'Tenant'
+        verbose_name_plural = 'Tenants'
+
+    def __str__(self):
+        return self.nombre
+
+
+class Modulo(models.Model):
+    clave = models.CharField(max_length=50, unique=True)
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = 'Módulo'
+        verbose_name_plural = 'Módulos'
+
+    def __str__(self):
+        return self.nombre
+
+
+class TenantModulo(models.Model):
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='modulos_contratados')
+    modulo = models.ForeignKey(Modulo, on_delete=models.CASCADE)
+    fecha_activacion = models.DateTimeField(auto_now_add=True)
+    fecha_vencimiento = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('tenant', 'modulo')
+        verbose_name = 'Módulo contratado por Tenant'
+        verbose_name_plural = 'Módulos contratados por Tenant'
+
+    def __str__(self):
+        return f"{self.tenant.nombre} - {self.modulo.nombre} ({'Activo' if self.is_active else 'Inactivo'})"
 
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name='bombero', on_delete=models.CASCADE)
+    tenant = models.ForeignKey(Tenant, related_name='usuarios', on_delete=models.PROTECT, null=True, blank=True)
     rut = models.CharField(max_length=15)
     nombres = models.CharField(max_length=150, blank=True)
     apellido_paterno = models.CharField(max_length=150, blank=True)
@@ -29,6 +76,7 @@ class UserProfile(models.Model):
     direccion_comuna = models.CharField(max_length=100, blank=True)
     contacto = models.IntegerField(null = True)
     imagen = models.ImageField(upload_to ='fotos_perfil/', default='fotos_perfil/user.jpg')
+    is_conductor = models.BooleanField(default=False)
 
 RESPONSABLE_CHOICES = [
     ('director', 'Director'),
@@ -322,3 +370,124 @@ class ExcepcionAsistencia(models.Model):
 
     def __str__(self):
         return f"{self.tipo_excepcion} - {self.autor.username} ({self.fecha_inicio.strftime('%Y-%m-%d')} a {self.fecha_fin.strftime('%Y-%m-%d')})"
+
+
+class Guardia(models.Model):
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='guardias')
+    fecha = models.DateField()
+    oficial = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='guardias_oficial')
+    conductor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='guardias_conductor')
+    bomberos = models.ManyToManyField(User, related_name='guardias_bombero')
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='guardias_creadas')
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+    es_borrador = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('tenant', 'fecha')
+        ordering = ['fecha']
+        verbose_name = 'Guardia'
+        verbose_name_plural = 'Guardias'
+
+    def __str__(self):
+        return f"Guardia {self.fecha.strftime('%d/%m/%Y')} - Tenant: {self.tenant.nombre}"
+
+
+class SolicitudReemplazo(models.Model):
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('aceptada', 'Aceptada'),
+        ('rechazada', 'Rechazada'),
+    ]
+
+    guardia = models.ForeignKey(Guardia, on_delete=models.CASCADE, related_name='solicitudes_reemplazo')
+    solicitante = models.ForeignKey(User, on_delete=models.CASCADE, related_name='solicitudes_reemplazo_pedidas')
+    reemplazo = models.ForeignKey(User, on_delete=models.CASCADE, related_name='solicitudes_reemplazo_recibidas')
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_respuesta = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-fecha_creacion']
+        verbose_name = 'Solicitud de Reemplazo'
+        verbose_name_plural = 'Solicitudes de Reemplazo'
+
+    def __str__(self):
+        return f"Reemplazo {self.guardia.fecha.strftime('%d/%m/%Y')}: {self.solicitante.username} -> {self.reemplazo.username} ({self.estado})"
+
+
+# ==================== ENCUESTAS Y FORMULARIOS ====================
+
+class Formulario(models.Model):
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='formularios')
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True)
+    fecha_lanzamiento = models.DateTimeField()
+    fecha_inicio = models.DateTimeField()
+    fecha_fin = models.DateTimeField(null=True, blank=True)
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    creado_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='formularios_creados')
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-fecha_lanzamiento', '-creado_en']
+        verbose_name = 'Formulario'
+        verbose_name_plural = 'Formularios'
+
+    def __str__(self):
+        return self.titulo
+
+
+class FormularioCampo(models.Model):
+    TIPO_CAMPO_CHOICES = [
+        ('numerico', 'Numérico'),
+        ('texto', 'Texto'),
+        ('seleccion_multiple', 'Selección Múltiple'),
+        ('seleccion_unica', 'Selección Única'),
+    ]
+
+    formulario = models.ForeignKey(Formulario, on_delete=models.CASCADE, related_name='campos')
+    label = models.CharField(max_length=255)
+    tipo_campo = models.CharField(max_length=50, choices=TIPO_CAMPO_CHOICES)
+    obligatorio = models.BooleanField(default=True)
+    opciones = models.JSONField(default=list, blank=True, help_text="Lista de opciones (array de strings) para selección")
+    orden = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['orden', 'id']
+        verbose_name = 'Campo de Formulario'
+        verbose_name_plural = 'Campos de Formulario'
+
+    def __str__(self):
+        return f"{self.label} ({self.get_tipo_campo_display()})"
+
+
+class FormularioRespuesta(models.Model):
+    formulario = models.ForeignKey(Formulario, on_delete=models.CASCADE, related_name='respuestas')
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='respuestas_formularios')
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('formulario', 'usuario')
+        ordering = ['-creado_en']
+        verbose_name = 'Respuesta de Formulario'
+        verbose_name_plural = 'Respuestas de Formulario'
+
+    def __str__(self):
+        return f"Respuesta de {self.usuario.username} a {self.formulario.titulo}"
+
+
+class FormularioRespuestaValor(models.Model):
+    respuesta = models.ForeignKey(FormularioRespuesta, on_delete=models.CASCADE, related_name='valores')
+    campo = models.ForeignKey(FormularioCampo, on_delete=models.CASCADE, related_name='respuestas_valores')
+    valor = models.JSONField(help_text="Valor ingresado por el usuario (número, texto o array de opciones)")
+
+    class Meta:
+        unique_together = ('respuesta', 'campo')
+        verbose_name = 'Valor de Respuesta'
+        verbose_name_plural = 'Valores de Respuesta'
+
+    def __str__(self):
+        return f"Valor para {self.campo.label}: {self.valor}"
+

@@ -9,7 +9,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.utils.timezone import now
 from rest_framework.exceptions import ValidationError
 from ..models import ComprobanteTransferencia, ComprobanteTesorero, MesAnio, UserProfile
-from ..permissions import groups_required
+from ..permissions import groups_required, module_required
 from ..serializers.tesoreria import (
     ComprobanteTransferenciaSerializer,
     ComprobanteTesoreroSerializer,
@@ -25,7 +25,7 @@ from ..utils import (
 class ComprobanteTransferenciaViewSet(viewsets.ModelViewSet):
     queryset = ComprobanteTransferencia.objects.all()
     serializer_class = ComprobanteTransferenciaSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, module_required('tesoreria')]
     parser_classes = [MultiPartParser, FormParser, JSONParser] 
 
     def perform_create(self, serializer):
@@ -93,7 +93,7 @@ class ComprobanteTransferenciaViewSet(viewsets.ModelViewSet):
 class ComprobanteTesoreroViewSet(viewsets.ModelViewSet):
     queryset = ComprobanteTesorero.objects.all()
     serializer_class = ComprobanteTesoreroSerializer
-    permission_classes = [permissions.IsAuthenticated, groups_required('Tesorero')]
+    permission_classes = [permissions.IsAuthenticated, groups_required('Tesorero'), module_required('tesoreria')]
     
     def perform_create(self, serializer):
         comprobante = serializer.save(tesorero=self.request.user) 
@@ -109,6 +109,7 @@ class ComprobanteTesoreroViewSet(viewsets.ModelViewSet):
 class MesAnioViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MesAnio.objects.all()
     serializer_class = MesAnioSerializer
+    permission_classes = [permissions.IsAuthenticated, module_required('tesoreria')]
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def mis_meses_pagados(self, request):
@@ -146,7 +147,7 @@ class MesAnioViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class ResumenCuotasViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, module_required('tesoreria')]
 
     def list(self, request):
         perfiles = UserProfile.objects.select_related('user').all()

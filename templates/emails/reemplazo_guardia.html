@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Solicitud de Reemplazo de Guardia</title>
+  </head>
+  <body style="font-family: Arial, Helvetica, sans-serif; color: #1f2937; background: #ffffff;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px;">
+      <h2 style="margin: 0 0 12px 0; color: #dc2626;">Solicitud de Reemplazo</h2>
+      <p style="margin: 0 0 16px 0;">
+        Hola <strong>{{ reemplazo.first_name }} {{ reemplazo.last_name }}</strong>,
+      </p>
+      <p style="margin: 0 0 16px 0; line-height: 1.5;">
+        El bombero <strong>{{ solicitante.first_name }} {{ solicitante.last_name }}</strong> te ha enviado una solicitud para cubrir su turno de guardia programado.
+      </p>
+
+      <h3 style="border-bottom: 1px solid #f3f4f6; padding-bottom: 4px; color: #374151;">Detalles del Turno</h3>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+        <tr>
+          <td style="padding: 6px 0; font-weight: bold; width: 120px;">Fecha Guardia</td>
+          <td style="padding: 6px 0; font-size: 16px; color: #dc2626; font-weight: bold;">{{ guardia.fecha|date:"d/m/Y" }}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; font-weight: bold;">Oficial a Cargo</td>
+          <td style="padding: 6px 0;">{% if guardia.oficial %}{{ guardia.oficial.first_name }} {{ guardia.oficial.last_name }}{% else %}<span style="color:#6b7280; font-style:italic;">Pendiente</span>{% endif %}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; font-weight: bold;">Conductor</td>
+          <td style="padding: 6px 0;">{% if guardia.conductor %}{{ guardia.conductor.first_name }} {{ guardia.conductor.last_name }}{% else %}<span style="color:#6b7280; font-style:italic;">Pendiente</span>{% endif %}</td>
+        </tr>
+      </table>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="{{ solicitudes_url }}" style="background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 8px; display: inline-block; box-shadow: 0 4px 6px rgba(220, 38, 38, 0.15);">
+          Responder Solicitud
+        </a>
+      </div>
+
+      <p style="margin: 24px 0 0 0; font-size: 14px; color: #6b7280; text-align: center;">
+        Este es un correo automático, por favor no respondas.
+      </p>
+    </div>
+  </body>
+</html>

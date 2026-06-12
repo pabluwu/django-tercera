@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 
 from ..models import Sala, Item, LogInventario, AccionLogChoices
+from ..permissions import module_required
 from ..serializers.inventario import (
     SalaSerializer,
     SalaCreateUpdateSerializer,
@@ -41,7 +42,7 @@ class SalaViewSet(viewsets.ModelViewSet):
     Proporciona endpoints CRUD con logging de todas las operaciones.
     Implementa soft delete (cambia is_active a False en lugar de eliminar).
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, module_required('inventario')]
     queryset = Sala.objects.filter(is_active=True)
     
     def get_serializer_class(self):
@@ -107,7 +108,7 @@ class ItemViewSet(viewsets.ModelViewSet):
     Proporciona endpoints CRUD con logging de todas las operaciones.
     Implementa soft delete y la acción especial 'transferir'.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, module_required('inventario')]
     queryset = Item.objects.filter(is_active=True)
     
     def get_serializer_class(self):
@@ -214,7 +215,7 @@ class LogInventarioViewSet(viewsets.ReadOnlyModelViewSet):
     
     Permite visualizar el historial de todas las operaciones del inventario.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, module_required('inventario')]
     queryset = LogInventario.objects.all()
     serializer_class = LogInventarioSerializer
     

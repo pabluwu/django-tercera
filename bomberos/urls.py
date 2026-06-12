@@ -25,6 +25,8 @@ from .views.inventario import (
 )
 
 from .views.excepcion_asistencia import ExcepcionAsistenciaViewSet
+from .views.guardia import GuardiaViewSet, SolicitudReemplazoViewSet
+from .views.encuesta import FormularioViewSet, FormularioRespuestaViewSet
 
 router = DefaultRouter()
 router.register(r'perfiles', UserProfileViewSet)
@@ -49,6 +51,15 @@ router.register(r'inventario/logs', LogInventarioViewSet, basename='log-inventar
 
 # ExcepcionAsistencia endpoints
 router.register(r'excepciones-asistencia', ExcepcionAsistenciaViewSet, basename='excepcion-asistencia')
+
+# Guardias endpoints
+router.register(r'guardias', GuardiaViewSet, basename='guardia')
+router.register(r'guardias-solicitudes', SolicitudReemplazoViewSet, basename='guardia-solicitud')
+
+# Encuestas endpoints
+router.register(r'formularios', FormularioViewSet, basename='formulario')
+router.register(r'formularios-respuestas', FormularioRespuestaViewSet, basename='formulario-respuesta')
+
 
 urlpatterns = [
     path('citaciones/responsables/', ResponsablesListView.as_view(), name='responsables_list'),

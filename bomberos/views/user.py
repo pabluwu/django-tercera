@@ -35,6 +35,19 @@ def me_view(request):
     if profile:
         profile_data = UserProfileSerializer(profile, context={'request': request}).data
 
+    tenant_data = None
+    if profile and profile.tenant:
+        tenant = profile.tenant
+        modulos_activos = list(
+            tenant.modulos_contratados.filter(is_active=True).values_list('modulo__clave', flat=True)
+        )
+        tenant_data = {
+            "id": tenant.id,
+            "nombre": tenant.nombre,
+            "subdominio": tenant.subdominio,
+            "modulos_activos": modulos_activos,
+        }
+
     groups_data = [
         {
             "id": group.id,
@@ -52,4 +65,6 @@ def me_view(request):
         "permissions": list(permisos),  # convertir set en lista
         "profile": profile_data,
         "groups": groups_data,
+        "tenant": tenant_data,
     })
+
