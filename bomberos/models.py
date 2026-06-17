@@ -102,10 +102,18 @@ class Citacion(models.Model):
         return self.nombre
     
 class Licencia(models.Model):
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('aceptada', 'Aceptada'),
+        ('rechazada', 'Rechazada'),
+    ]
+
     citacion = models.ForeignKey(Citacion, on_delete=models.CASCADE)
     motivo = models.TextField(max_length=300)
     autor = models.ForeignKey(User, on_delete=models.CASCADE)
     fecha_licencia = models.DateTimeField(auto_now_add=True)
+    documento = models.FileField(upload_to='licencias/', null=True, blank=True)
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
 
     class Meta:
         permissions = [
@@ -113,7 +121,7 @@ class Licencia(models.Model):
         ]
 
     def __str__(self):
-        return self.motivo
+        return f"{self.motivo} ({self.get_estado_display()})"
 
 class Emergencia(models.Model):
     clave = models.CharField(max_length=100)

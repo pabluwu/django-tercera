@@ -67,6 +67,36 @@ def send_licencia_confirmation_email(licencia):
 
     return send_email_notification(subject, template, context, [user.email], text_body)
 
+def send_licencia_status_email(licencia):
+    """
+    Envía una notificación al solicitante indicando si su licencia fue aceptada o rechazada.
+    """
+    user = licencia.autor
+    if not user.email:
+        logger.warning(f"El usuario {user.username} no tiene email registrado.")
+        return False
+
+    citacion = licencia.citacion
+    context = {
+        'user': user,
+        'licencia': licencia,
+        'citacion': citacion,
+    }
+
+    estado_str = licencia.get_estado_display()
+    subject = f"Resultado de Licencia: {estado_str} - {citacion.nombre}"
+    template = 'emails/licencia_resultado.html'
+
+    fecha_local = localtime(citacion.fecha) if citacion.fecha else None
+    text_body = (
+        f"Hola {user.first_name}, tu solicitud de licencia ha sido {estado_str.lower()}.\n\n"
+        f"Motivo: {licencia.motivo}\n"
+        f"Citación: {citacion.nombre}\n"
+        f"Fecha Citación: {fecha_local.strftime('%d/%m/%Y %H:%M') if fecha_local else 'N/A'}\n"
+    )
+
+    return send_email_notification(subject, template, context, [user.email], text_body)
+
 def build_citacion_ics(citacion):
     """
     Construye el contenido de un archivo ICS para una citación.

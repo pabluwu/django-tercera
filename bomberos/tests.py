@@ -356,3 +356,171 @@ class SaludYAccidentesAPITests(APITestCase):
         movimiento = MovimientoAccidente.objects.first()
         self.assertFalse(bool(movimiento.archivo))  # sin archivo
 
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from bomberos.models import Citacion, Licencia
+
+class LicenciasAPITests(APITestCase):
+
+    def setUp(self):
+        self.tenant = Tenant.objects.create(nombre="Cuerpo de Bomberos", subdominio="cb")
+        
+        # Crear grupos
+        self.oficial_group = Group.objects.create(name="Ayudante")
+        self.bombero_group = Group.objects.create(name="Bombero")
+
+        # Usuarios
+        self.oficial_user = User.objects.create_user(
+            username="oficial_lic", email="oficial_lic@bomberos.cl", password="password123"
+        )
+        self.oficial_profile = UserProfile.objects.create(
+            user=self.oficial_user, tenant=self.tenant, rut="11.111.111-1"
+        )
+        self.oficial_user.groups.add(self.oficial_group)
+
+        self.bombero_user = User.objects.create_user(
+            username="bombero_lic", email="bombero_lic@bomberos.cl", password="password123"
+        )
+        self.bombero_profile = UserProfile.objects.create(
+            user=self.bombero_user, tenant=self.tenant, rut="22.222.222-2"
+        )
+        self.bombero_user.groups.add(self.bombero_group)
+
+        # Crear Citacion (en el futuro > 24 horas para que sea válida la creación de licencias)
+        self.citacion = Citacion.objects.create(
+            nombre="Citación de Prueba",
+            lugar="Cuartel",
+            tenida="Uniforme",
+            fecha=timezone.now() + timedelta(days=2),
+            autor=self.oficial_user
+        )
+
+    def test_crear_licencia_con_documento_valido(self):
+        """Crear una licencia con un documento válido de menos de 500 KB."""
+        self.client.force_authenticate(user=self.bombero_user)
+        archivo_valido = SimpleUploadedFile("certificado.pdf", b"a" * 1024, content_type="application/pdf")
+        
+        payload = {
+            "citacion": self.citacion.id,
+            "motivo": "Ausencia médica",
+            "autor": self.bombero_user.id,
+            "documento": archivo_valido
+        }
+        
+        response = self.client.post('/api/licencias/', payload, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Licencia.objects.count(), 1)
+        
+        licencia = Licencia.objects.first()
+        self.assertEqual(licencia.estado, 'pendiente')
+        self.assertTrue(bool(licencia.documento))
+
+    def test_crear_licencia_con_documento_excede_limite(self):
+        """Crear una licencia con un documento que pesa más de 500 KB debe fallar."""
+        self.client.force_authenticate(user=self.bombero_user)
+        # 501 KB
+        archivo_grande = SimpleUploadedFile("certificado_grande.pdf", b"a" * (501 * 1024), content_type="application/pdf")
+        
+        payload = {
+            "citacion": self.citacion.id,
+            "motivo": "Ausencia médica",
+            "autor": self.bombero_user.id,
+            "documento": archivo_grande
+        }
+        
+        response = self.client.post('/api/licencias/', payload, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("El documento no debe superar los 500 KB", str(response.data))
+
+    def test_no_dos_licencias_activas_para_misma_citacion(self):
+        """Un usuario no puede tener dos solicitudes de licencia activas (pendientes/aceptadas) para la misma citación."""
+        self.client.force_authenticate(user=self.bombero_user)
+        
+        # Primera licencia (pendiente)
+        Licencia.objects.create(
+            citacion=self.citacion,
+            motivo="Primera",
+            autor=self.bombero_user,
+            estado='pendiente'
+        )
+        
+        # Intento de crear otra
+        payload = {
+            "citacion": self.citacion.id,
+            "autor": self.bombero_user.id,
+            "motivo": "Segunda"
+        }
+        response = self.client.post('/api/licencias/', payload, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("Ya tienes una solicitud de licencia pendiente o aceptada", str(response.data))
+
+    def test_si_rechazada_puede_enviar_otra(self):
+        """Si la licencia previa es rechazada, se permite solicitar una nueva para la misma citación."""
+        self.client.force_authenticate(user=self.bombero_user)
+        
+        # Crear una rechazada
+        Licencia.objects.create(
+            citacion=self.citacion,
+            motivo="Rechazada previamente",
+            autor=self.bombero_user,
+            estado='rechazada'
+        )
+        
+        # Crear una nueva
+        payload = {
+            "citacion": self.citacion.id,
+            "autor": self.bombero_user.id,
+            "motivo": "Nueva solicitud"
+        }
+        response = self.client.post('/api/licencias/', payload, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Licencia.objects.filter(citacion=self.citacion, autor=self.bombero_user).count(), 2)
+
+    def test_oficial_puede_aceptar_o_rechazar_licencia(self):
+        """Un oficial de la compañía puede aceptar y rechazar una licencia."""
+        licencia = Licencia.objects.create(
+            citacion=self.citacion,
+            motivo="Ausencia",
+            autor=self.bombero_user,
+            estado='pendiente'
+        )
+        
+        # Aceptar por oficial
+        self.client.force_authenticate(user=self.oficial_user)
+        response = self.client.patch(f'/api/licencias/{licencia.id}/aceptar/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        licencia.refresh_from_db()
+        self.assertEqual(licencia.estado, 'aceptada')
+        
+        # Rechazar por oficial
+        response = self.client.patch(f'/api/licencias/{licencia.id}/rechazar/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        licencia.refresh_from_db()
+        self.assertEqual(licencia.estado, 'rechazada')
+
+    def test_auto_aceptar_licencias_pasadas(self):
+        """Verificar que las licencias pendientes de citaciones en el pasado se auto-acepten al consultar."""
+        citacion_pasada = Citacion.objects.create(
+            nombre="Citación Pasada",
+            lugar="Cuartel",
+            tenida="Uniforme",
+            fecha=timezone.now() - timedelta(days=1),
+            autor=self.oficial_user
+        )
+        
+        licencia_pasada = Licencia.objects.create(
+            citacion=citacion_pasada,
+            motivo="Falta antigua",
+            autor=self.bombero_user,
+            estado='pendiente'
+        )
+        
+        self.client.force_authenticate(user=self.bombero_user)
+        # Consultar las licencias (esto debe disparar la auto-aceptación)
+        response = self.client.get('/api/licencias/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        licencia_pasada.refresh_from_db()
+        self.assertEqual(licencia_pasada.estado, 'aceptada')

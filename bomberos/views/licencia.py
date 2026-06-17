@@ -9,18 +9,47 @@ from rest_framework.exceptions import ValidationError
 from bomberos.models import Licencia, Citacion
 from ..serializers.licencia import LicenciaSerializer
 from ..serializers.citacion import CitacionConLicenciasSerializer
-from ..utils import send_licencia_confirmation_email
+from ..utils import send_licencia_confirmation_email, send_licencia_status_email
+from ..permissions import IsOficial
 
 class LicenciaViewSet(viewsets.ModelViewSet):
     queryset = Licencia.objects.all()
     serializer_class = LicenciaSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    @action(detail=True, methods=['patch'], permission_classes=[permissions.IsAuthenticated, IsOficial])
+    def aceptar(self, request, pk=None):
+        licencia = self.get_object()
+        licencia.estado = 'aceptada'
+        licencia.save()
+        send_licencia_status_email(licencia)
+        return Response({"detail": "Licencia aceptada correctamente.", "estado": licencia.estado})
+
+    @action(detail=True, methods=['patch'], permission_classes=[permissions.IsAuthenticated, IsOficial])
+    def rechazar(self, request, pk=None):
+        licencia = self.get_object()
+        licencia.estado = 'rechazada'
+        licencia.save()
+        send_licencia_status_email(licencia)
+        return Response({"detail": "Licencia rechazada correctamente.", "estado": licencia.estado})
+
+    def _auto_accept_past_licencias(self):
+        # Encontrar todas las licencias que estén pendientes y cuya citación ya haya pasado su fecha y hora
+        past_pending = Licencia.objects.filter(
+            estado='pendiente',
+            citacion__fecha__lt=timezone.now()
+        )
+        for licencia in past_pending:
+            licencia.estado = 'aceptada'
+            licencia.save()
+            send_licencia_status_email(licencia)
+
     @action(detail=False, methods=['get'])
     def citaciones_con_licencias(self, request):
         """
         Devuelve todas las citaciones con la cantidad de licencias asociadas.
         """
+        self._auto_accept_past_licencias()
         citaciones = Citacion.objects.annotate(num_licencias=Count('licencia')).order_by('-fecha')
         serializer = CitacionConLicenciasSerializer(citaciones, many=True)
         return Response(serializer.data)
@@ -43,6 +72,7 @@ class LicenciaViewSet(viewsets.ModelViewSet):
         send_licencia_confirmation_email(licencia)
 
     def get_queryset(self):
+        self._auto_accept_past_licencias()
         queryset = super().get_queryset()
         autor_id = self.request.query_params.get('autor')
         citacion_id = self.request.query_params.get('citacion')
