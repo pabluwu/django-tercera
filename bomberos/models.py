@@ -491,3 +491,80 @@ class FormularioRespuestaValor(models.Model):
     def __str__(self):
         return f"Valor para {self.campo.label}: {self.valor}"
 
+
+class CategoriaSalud(models.TextChoices):
+    EXAMENES = 'examenes', 'Exámenes'
+    FICHAS_MEDICAS = 'fichas_medicas', 'Fichas Médicas'
+    CERTIFICADOS_APTITUD = 'certificados_aptitud', 'Certificados de Aptitud'
+    OTROS = 'otros', 'Otros'
+
+
+class ExpedienteSalud(models.Model):
+    bombero = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='expedientes_salud')
+    categoria = models.CharField(max_length=50, choices=CategoriaSalud.choices)
+    archivo = models.FileField(upload_to='salud/expedientes/')
+    fecha_documento = models.DateField()
+    observaciones = models.TextField(blank=True)
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='expedientes_salud_creados')
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-fecha_documento', '-creado_en']
+        verbose_name = 'Expediente de Salud'
+        verbose_name_plural = 'Expedientes de Salud'
+
+    def __str__(self):
+        return f"{self.bombero.nombres} - {self.get_categoria_display()} - {self.fecha_documento}"
+
+
+class ContextoAccidente(models.TextChoices):
+    INCENDIO = 'incendio', 'Incendio'
+    RESCATE = 'rescate', 'Rescate'
+    EJERCICIO = 'ejercicio', 'Ejercicio'
+    OTRO = 'otro', 'Otro'
+
+
+class EstadoAccidente(models.TextChoices):
+    ABIERTO = 'abierto', 'Abierto'
+    CERRADO = 'cerrado', 'Cerrado'
+
+
+class Accidente(models.Model):
+    bombero = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='accidentes')
+    fecha_hora = models.DateTimeField()
+    descripcion = models.TextField()
+    contexto = models.CharField(max_length=50, choices=ContextoAccidente.choices)
+    estado = models.CharField(max_length=20, choices=EstadoAccidente.choices, default=EstadoAccidente.ABIERTO)
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='accidentes_creados')
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-fecha_hora']
+        verbose_name = 'Accidente'
+        verbose_name_plural = 'Accidentes'
+
+    def __str__(self):
+        return f"Accidente de {self.bombero.nombres} ({self.fecha_hora.date()})"
+
+
+class MovimientoAccidente(models.Model):
+    accidente = models.ForeignKey(Accidente, on_delete=models.CASCADE, related_name='movimientos')
+    fecha_hito = models.DateField()
+    tipo_accion = models.CharField(max_length=100)
+    detalle = models.TextField(blank=True)
+    archivo = models.FileField(upload_to='salud/accidentes/', null=True, blank=True)
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='movimientos_creados')
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-fecha_hito', '-creado_en']
+        verbose_name = 'Movimiento de Accidente'
+        verbose_name_plural = 'Movimientos de Accidente'
+
+    def __str__(self):
+        return f"{self.tipo_accion} - {self.fecha_hito}"
+
+

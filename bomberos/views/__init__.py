@@ -22,3 +22,9 @@ from .inventario import (
     LogInventarioViewSet,
 )
 from .excepcion_asistencia import ExcepcionAsistenciaViewSet
+from .salud import (
+    ExpedienteSaludViewSet,
+    AccidenteViewSet,
+    MovimientoAccidenteViewSet,
+)
+

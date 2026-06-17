@@ -27,6 +27,12 @@ from .views.inventario import (
 from .views.excepcion_asistencia import ExcepcionAsistenciaViewSet
 from .views.guardia import GuardiaViewSet, SolicitudReemplazoViewSet
 from .views.encuesta import FormularioViewSet, FormularioRespuestaViewSet
+from .views import (
+    ExpedienteSaludViewSet,
+    AccidenteViewSet,
+    MovimientoAccidenteViewSet,
+)
+
 
 router = DefaultRouter()
 router.register(r'perfiles', UserProfileViewSet)
@@ -59,6 +65,12 @@ router.register(r'guardias-solicitudes', SolicitudReemplazoViewSet, basename='gu
 # Encuestas endpoints
 router.register(r'formularios', FormularioViewSet, basename='formulario')
 router.register(r'formularios-respuestas', FormularioRespuestaViewSet, basename='formulario-respuesta')
+
+# Salud y Accidentes endpoints
+router.register(r'salud/expedientes', ExpedienteSaludViewSet, basename='expediente-salud')
+router.register(r'salud/accidentes', AccidenteViewSet, basename='accidente')
+router.register(r'salud/movimientos', MovimientoAccidenteViewSet, basename='movimiento-accidente')
+
 
 
 urlpatterns = [

@@ -129,3 +129,33 @@ class IsOficial(BasePermission):
         return False
 
 
+class IsEncargadoSalud(BasePermission):
+    """
+    Permiso que restringe el acceso únicamente al Encargado de Salud
+    o superusuarios.
+    """
+
+    def has_permission(self, request, view) -> bool:
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+
+        if user.is_superuser:
+            return True
+
+        # Verificar si pertenece al grupo "Encargado de Salud"
+        user_groups = {g.lower() for g in user.groups.values_list('name', flat=True)}
+        if 'encargado de salud' in user_groups or 'encargado_salud' in user_groups:
+            return True
+
+        # También verificar según el cargo registrado en el perfil
+        profile = getattr(user, 'bombero', None)
+        if profile and profile.cargo:
+            cargo = profile.cargo.lower()
+            if 'salud' in cargo or 'encargado de salud' in cargo:
+                return True
+
+        return False
+
+
+

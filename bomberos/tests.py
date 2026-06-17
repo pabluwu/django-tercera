@@ -248,3 +248,111 @@ class EncuestasAPITests(APITestCase):
         response = self.client.post(url, payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("no es una opción válida", str(response.data))
+
+
+from bomberos.models import ExpedienteSalud, Accidente, MovimientoAccidente
+
+class SaludYAccidentesAPITests(APITestCase):
+
+    def setUp(self):
+        self.tenant = Tenant.objects.create(nombre="Cuerpo de Bomberos", subdominio="cb")
+        
+        # Crear grupos
+        self.salud_group = Group.objects.create(name="Encargado de Salud")
+        self.bombero_group = Group.objects.create(name="Bombero")
+
+        # Encargado de Salud
+        self.encargado_user = User.objects.create_user(
+            username="encargado", email="salud@bomberos.cl", password="password123"
+        )
+        self.encargado_profile = UserProfile.objects.create(
+            user=self.encargado_user, tenant=self.tenant, rut="11.111.111-1", cargo="Encargado de Salud"
+        )
+        self.encargado_user.groups.add(self.salud_group)
+
+        # Bombero
+        self.bombero_user = User.objects.create_user(
+            username="bombero", email="bombero@bomberos.cl", password="password123"
+        )
+        self.bombero_profile = UserProfile.objects.create(
+            user=self.bombero_user, tenant=self.tenant, rut="22.222.222-2"
+        )
+        self.bombero_user.groups.add(self.bombero_group)
+
+    def test_acceso_restringido_para_bombero_normal(self):
+        """Un bombero normal no debe poder listar expedientes ni accidentes (403)."""
+        self.client.force_authenticate(user=self.bombero_user)
+        
+        response = self.client.get('/api/salud/expedientes/')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+        response = self.client.get('/api/salud/accidentes/')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_acceso_concedido_para_encargado_salud(self):
+        """El Encargado de Salud debe poder listar expedientes y accidentes (200)."""
+        self.client.force_authenticate(user=self.encargado_user)
+        
+        response = self.client.get('/api/salud/expedientes/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        response = self.client.get('/api/salud/accidentes/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_creacion_expediente_salud_con_archivo(self):
+        """El Encargado de Salud puede subir expedientes médicos."""
+        self.client.force_authenticate(user=self.encargado_user)
+        
+        # Creamos un archivo dummy en memoria
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        archivo_test = SimpleUploadedFile("examen.pdf", b"pdf content", content_type="application/pdf")
+        
+        payload = {
+            "bombero": self.bombero_profile.id,
+            "categoria": "examenes",
+            "archivo": archivo_test,
+            "fecha_documento": "2026-06-13",
+            "observaciones": "Examen de sangre preventivo"
+        }
+        
+        response = self.client.post('/api/salud/expedientes/', payload, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(ExpedienteSalud.objects.count(), 1)
+        
+        expediente = ExpedienteSalud.objects.first()
+        self.assertEqual(expediente.creado_por, self.encargado_user)
+        self.assertEqual(expediente.categoria, "examenes")
+
+    def test_creacion_accidente_y_movimiento(self):
+        """El Encargado de Salud puede registrar accidentes e hitos médicos."""
+        self.client.force_authenticate(user=self.encargado_user)
+        
+        payload_accidente = {
+            "bombero": self.bombero_profile.id,
+            "fecha_hora": "2026-06-13T10:00:00Z",
+            "descripcion": "Esguince de tobillo en acto de servicio",
+            "contexto": "incendio"
+        }
+        
+        response = self.client.post('/api/salud/accidentes/', payload_accidente, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Accidente.objects.count(), 1)
+        
+        accidente = Accidente.objects.first()
+        self.assertEqual(accidente.estado, "abierto")
+        
+        # Registrar un movimiento (sin archivo, hito opcional)
+        payload_movimiento = {
+            "accidente": accidente.id,
+            "fecha_hito": "2026-06-13",
+            "tipo_accion": "Derivación a centro médico",
+            "detalle": "Traslado en ambulancia institucional"
+        }
+        
+        response = self.client.post('/api/salud/movimientos/', payload_movimiento, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(MovimientoAccidente.objects.count(), 1)
+        
+        movimiento = MovimientoAccidente.objects.first()
+        self.assertFalse(bool(movimiento.archivo))  # sin archivo
+

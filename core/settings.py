@@ -141,7 +141,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'documentos')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # 12. Email y Notificaciones (Tus variables originales)
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'bomberos.email_backend.AsyncSingletonEmailBackend')
 EMAIL_HOST = os.getenv('SMTP_HOST', '')
 EMAIL_PORT = int(os.getenv('SMTP_PORT', '465'))
 EMAIL_HOST_USER = os.getenv('SMTP_USER', '')
