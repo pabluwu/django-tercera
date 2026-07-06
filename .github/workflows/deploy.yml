@@ -1,9 +1,10 @@
-name: Deploy Test Backend to VPS
+name: Deploy Backend to VPS
 
 on:
   push:
     branches:
-      - test  # Ahora se activa únicamente al empujar a la rama 'test'
+      - test
+      - main  # Ahora también escucha a producción
 
 jobs:
   deploy:
@@ -13,26 +14,43 @@ jobs:
       - name: Checkout del código
         uses: actions/checkout@v4
 
+      - name: Configurar variables de entorno de despliegue
+        id: set-env
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "APP_DIR=~/apps/prod-back" >> $GITHUB_OUTPUT
+            echo "BRANCH=main" >> $GITHUB_OUTPUT
+            echo "COMPOSE_FILE=docker-compose.prod.yml" >> $GITHUB_OUTPUT
+            echo "PROJECT_NAME=prod-back" >> $GITHUB_OUTPUT
+          else
+            echo "APP_DIR=~/apps/test-back" >> $GITHUB_OUTPUT
+            echo "BRANCH=test" >> $GITHUB_OUTPUT
+            echo "COMPOSE_FILE=docker-compose.yml" >> $GITHUB_OUTPUT
+            echo "PROJECT_NAME=test-back" >> $GITHUB_OUTPUT
+          fi
+
       - name: Desplegar vía SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}      # Aquí va tu IP: 109.123.252.124
+          host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            # Navegar a la nueva carpeta acordada
-            cd ~/apps/test-back
+            # Asegurar que exista la carpeta destino
+            mkdir -p ${{ steps.set-env.outputs.APP_DIR }}
+            cd ${{ steps.set-env.outputs.APP_DIR }}
             
-            # Si la carpeta no está inicializada con Git, clonar la rama test
+            # Clonar o actualizar la rama correspondiente
             if [ ! -d ".git" ]; then
-              git clone -b test https://github.com/${{ github.repository }}.git .
+              git clone -b ${{ steps.set-env.outputs.BRANCH }} https://github.com/${{ github.repository }}.git .
             else
-              git pull origin test
+              git fetch origin ${{ steps.set-env.outputs.BRANCH }}
+              git reset --hard origin/${{ steps.set-env.outputs.BRANCH }}
             fi
             
-            # Reconstruir y levantar los contenedores en segundo plano
-            docker compose up -d --build --force-recreate
-            docker compose exec -T backend python manage.py migrate
+            # Reconstruir usando el archivo compose y el nombre de proyecto correctos
+            docker compose -f ${{ steps.set-env.outputs.COMPOSE_FILE }} -p ${{ steps.set-env.outputs.PROJECT_NAME }} up -d --build --force-recreate
+            
             # Limpieza preventiva de imágenes huérfanas
             docker image prune -f
