@@ -57,11 +57,14 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "https://stage.terceraquillota.cl",
+    "https://intranet.terceraquillota.cl"
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://test-api.terceraquillota.cl",  # Este es el que está fallando actualmente
+    "https://api.terceraquillota.cl",  # Este es el que está fallando actualmente
     "https://stage.terceraquillota.cl",     # Es buena práctica agregarlo también
+    "https://intranet.terceraquillota.cl"
 ]
 
 REST_FRAMEWORK = {
