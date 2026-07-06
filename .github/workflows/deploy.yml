@@ -38,7 +38,6 @@ jobs:
           port: 22
           script: |
             # Asegurar que exista la carpeta destino
-            mkdir -p ${{ steps.set-env.outputs.APP_DIR }}
             cd ${{ steps.set-env.outputs.APP_DIR }}
             
             # Clonar o actualizar la rama correspondiente
